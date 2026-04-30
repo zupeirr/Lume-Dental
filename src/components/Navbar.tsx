@@ -16,7 +16,7 @@ export default function Navbar({ onOpenBooking }: { onOpenBooking: () => void })
   return (
     <nav className="sticky top-0 z-50 w-full bg-bg-deep/80 backdrop-blur-md border-b border-white/10">
       <div className="container-wide flex items-center justify-between h-20">
-        <div className="text-2xl font-extrabold tracking-tighter text-white">LUME DENTAL</div>
+        <a href="/" className="text-2xl font-extrabold tracking-tighter text-white hover:opacity-80 transition-opacity">LUME DENTAL</a>
 
         {/* Desktop links */}
         <div className="hidden md:flex items-center space-x-8">

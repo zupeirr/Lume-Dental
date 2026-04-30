@@ -93,7 +93,7 @@ export default function Contact() {
                     <input 
                       {...register("fullName")}
                       type="text" 
-                      placeholder="John Doe" 
+                       
                       className={`w-full bg-white/5 border ${errors.fullName ? 'border-red-500/50' : 'border-white/10'} rounded-md px-4 py-3 text-sm text-white placeholder:text-white/10 focus:border-white/30 transition-all outline-none`}
                     />
                     {errors.fullName && <p className="text-[10px] text-red-500 font-bold">{errors.fullName.message}</p>}
@@ -103,7 +103,7 @@ export default function Contact() {
                     <input 
                       {...register("email")}
                       type="email" 
-                      placeholder="john@example.com" 
+                       
                       className={`w-full bg-white/5 border ${errors.email ? 'border-red-500/50' : 'border-white/10'} rounded-md px-4 py-3 text-sm text-white placeholder:text-white/10 focus:border-white/30 transition-all outline-none`}
                     />
                     {errors.email && <p className="text-[10px] text-red-500 font-bold">{errors.email.message}</p>}

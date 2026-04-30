@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="w-full py-20 bg-bg-deep border-t border-white/10">
       <div className="container-wide flex flex-col md:flex-row justify-between items-start gap-12">
         <div className="flex flex-col gap-6 max-w-sm">
-          <div className="text-2xl font-extrabold tracking-tighter text-white">LUME DENTAL</div>
+          <a href="/" className="text-2xl font-extrabold tracking-tighter text-white hover:opacity-80 transition-opacity block w-fit">LUME DENTAL</a>
           <p className="text-sm text-text-muted font-medium leading-relaxed">
             Precision dental care tailored to your unique needs. We combine the latest technology with a patient-first philosophy for the ultimate clinic experience.
           </p>
