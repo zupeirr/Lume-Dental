@@ -23,6 +23,8 @@ interface BookingModalProps {
 
 export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const {
     register,
@@ -33,18 +35,53 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
     resolver: zodResolver(bookingSchema)
   });
 
-  const onSubmit = (data: BookingFormData) => {
-    console.log("Booking Data:", data);
-    // Simulate API call
-    setTimeout(() => {
+  const onSubmit = async (data: BookingFormData) => {
+    setIsLoading(true);
+    setErrorMessage("");
+
+    const serviceMap: Record<string, number> = {
+      checkup: 1,
+      whitening: 2,
+      restorative: 3,
+      invisalign: 4
+    };
+
+    try {
+      const response = await fetch("http://localhost:5000/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: data.fullName,
+          email: data.email,
+          phone: data.phone,
+          service_id: serviceMap[data.service] || 1,
+          appointment_date: `${data.date} 09:00:00`, // Defaulting to 9 AM for now
+          comments: data.message
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to book appointment");
+      }
+
       setIsSubmitted(true);
       reset();
-    }, 1000);
+    } catch (error: any) {
+      setErrorMessage(error.message);
+      console.error("Booking Error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const closeModal = () => {
     onClose();
-    setTimeout(() => setIsSubmitted(false), 300);
+    setTimeout(() => {
+      setIsSubmitted(false);
+      setErrorMessage("");
+    }, 300);
   };
 
   return (
@@ -167,13 +204,20 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
                       />
                     </div>
 
+                    {errorMessage && (
+                      <div className="p-3 mb-4 text-sm font-medium text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl">
+                        {errorMessage}
+                      </div>
+                    )}
+
                     <motion.button
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
                       type="submit"
-                      className="btn-primary w-full py-5 rounded-2xl font-bold flex items-center justify-center gap-2 mt-4"
+                      disabled={isLoading}
+                      className="btn-primary w-full py-5 rounded-2xl font-bold flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
                     >
-                      Confirm Appointment Request
+                      {isLoading ? "Submitting..." : "Confirm Appointment Request"}
                     </motion.button>
                   </form>
                 </>
