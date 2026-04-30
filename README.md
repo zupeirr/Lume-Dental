@@ -2,25 +2,22 @@
 
 Lume Dental is a premium, full-stack web application built for modern dental clinics. It features a stunning, dynamic frontend for patients and a secure, data-rich backend for clinic administrators to manage appointments.
 
-## 📸 Gallery
+## 📸 Screenshots
 
-Here is a quick look at the core interfaces of the platform:
+Here are some screenshots of the live application. (Place your screenshot files in the `screenshots/` directory).
 
-**1. Landing Page Overview**  
-![Landing Page](screenshots/landing-page.png)  
-*The modern, dark-themed hero section welcoming patients to the clinic.*
+![Landing Page](screenshots/landing-page.png)
+*Modern Landing Page*
 
-**2. Seamless Booking Modal**  
-![Booking Form](screenshots/booking-modal.png)  
-*A clean, intuitive form allowing patients to request an appointment instantly.*
+![Booking Modal](screenshots/booking-modal.png)
+*Booking an Appointment*
 
-**3. Secure Admin Login**  
-![Admin Login](screenshots/admin-login.png)  
-*The secure gateway for administrators to access the backend dashboard.*
+![Admin Dashboard](screenshots/admin-dashboard.png)
+*Admin Dashboard with Analytics*
+![Login Page](screenshots/login-page.png)
+*Login Page*
 
-**4. Real-time Admin Dashboard**  
-![Admin Dashboard](screenshots/admin-dashboard.png)  
-*The comprehensive dashboard featuring dynamic Recharts for appointments and services, alongside a quick-action list to manage recent bookings.*
+
 
 ## 🚀 Features
 
@@ -74,23 +71,10 @@ npm run dev
 # In the root project directory
 npm run dev
 ```
-
-### 3. Usage
-- **Public Website**: Open `http://localhost:3000` to view the landing page and test the booking form.
-- **Admin Login**: Navigate to `http://localhost:3000/admin/login`
-  - **Email**: `admin@lumedental.com`
-  - **Password**: `admin123`
-
-## 📂 Project Structure
-- `/src`: Frontend React code (Components, Pages, App routing).
-- `/backend`: Node.js/Express server.
-  - `/config`: Database configuration and SQLite initialization.
-  - `/controllers`: Logic for authentication, appointments, and dashboard stats.
-  - `/routes`: Express routers defining API endpoints.
-  - `/middleware`: JWT security and role verification.
-
-## 🔒 Production Considerations
-Before deploying to a live server:
-1. Update `backend/.env` with a strong, random `JWT_SECRET`.
-2. Configure `cors()` in `backend/server.js` to only accept requests from your production frontend domain.
-3. Replace the SQLite database wrapper with `mysql2` if you are expecting high concurrent traffic.
+---
+##  Project Information
+- **Developer:** [Suber Sulub](https://github.com/zupeirr)
+- **Project Name:** Local Business Website
+- **Program:** Future Intern
+- **Task:** Final Task – Dental
+- **CIN ID:** FIT/APR26/FS14947
