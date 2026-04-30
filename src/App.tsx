@@ -17,7 +17,11 @@ import CTASection from "./components/CTASection";
 import Footer from "./components/Footer";
 import BookingModal from "./components/BookingModal";
 
-export default function App() {
+import { Routes, Route } from "react-router-dom";
+import AdminLogin from "./components/Admin/AdminLogin";
+import AdminDashboard from "./components/Admin/AdminDashboard";
+
+function PublicSite() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
 
   const openBooking = () => setIsBookingOpen(true);
@@ -41,6 +45,16 @@ export default function App() {
 
       <BookingModal isOpen={isBookingOpen} onClose={closeBooking} />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<PublicSite />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin" element={<AdminDashboard />} />
+    </Routes>
   );
 }
 
