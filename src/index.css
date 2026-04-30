@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Plus Jakarta Sans", sans-serif;
+
+  --color-brand-blue: #B9E8F2;
+  --color-brand-blue-dark: #3C6972;
+  --color-surface-dark: #111111;
+  --color-bg-deep: #050505;
+  --color-text-muted: #a1a1a1;
+  
+  --radius-xs: 4px;
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 8px;
+  --radius-2xl: 12px;
+  --radius-full: 9999px;
+
+  --spacing-section: 8rem;
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-bg-deep text-white antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tighter text-white;
+  }
+
+  p {
+    @apply text-text-muted;
+  }
+}
+
+@layer utilities {
+  .container-wide {
+    @apply max-w-[1440px] mx-auto px-6 md:px-12;
+  }
+  
+  .card-dark {
+    @apply bg-surface-dark border border-white/5 rounded-lg;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 bg-white text-black rounded-[4px] font-bold transition-all duration-300 relative overflow-hidden;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 0 20px 2px rgba(255, 255, 255, 0.25);
+  }
+
+  .btn-primary::after {
+    content: '';
+    @apply absolute top-0 -left-full w-full h-full;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    transition: all 0.6s ease;
+  }
+
+  .btn-primary:hover::after {
+    @apply left-full;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-transparent border border-white/20 text-white rounded-[4px] font-semibold transition-all duration-300 hover:bg-white/5;
+  }
+}
