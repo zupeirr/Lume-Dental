@@ -88,7 +88,7 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -101,7 +101,7 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-lg bg-bg-deep border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden"
+            className="relative w-full sm:max-w-lg bg-bg-deep border border-white/10 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl overflow-y-auto max-h-[92dvh] sm:max-h-[90vh]"
           >
             <button 
               onClick={closeModal}
@@ -110,19 +110,19 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
               <X size={20} />
             </button>
 
-            <div className="p-8 md:p-12">
+            <div className="p-6 sm:p-8 md:p-12">
               {!isSubmitted ? (
                 <>
-                  <div className="mb-10">
+                  <div className="mb-6 sm:mb-10">
                     <div className="inline-flex items-center px-3 py-1 bg-brand-blue/10 border border-brand-blue/20 rounded-full text-brand-blue mb-4">
                       <Calendar size={14} className="mr-2" />
                       <span className="text-[10px] font-bold uppercase tracking-wider">Appointment Booking</span>
                     </div>
-                    <h2 className="text-3xl font-bold tracking-tight text-white mb-2">Book Your Visit</h2>
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">Book Your Visit</h2>
                     <p className="text-text-muted text-sm font-medium">Please provide your details and we'll confirm your slot.</p>
                   </div>
 
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
@@ -216,7 +216,7 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
                       whileTap={{ scale: 0.98 }}
                       type="submit"
                       disabled={isLoading}
-                      className="btn-primary w-full py-5 rounded-2xl font-bold flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
+                      className="btn-primary w-full py-4 sm:py-5 rounded-2xl font-bold flex items-center justify-center gap-2 mt-2 sm:mt-4 disabled:opacity-50"
                     >
                       {isLoading ? "Submitting..." : "Confirm Appointment Request"}
                     </motion.button>
