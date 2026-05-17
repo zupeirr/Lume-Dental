@@ -42,13 +42,13 @@ exports.getStats = async (req, res) => {
       GROUP BY status
     `);
 
-    // 5. Get Recent 5 Appointments
+    // 5. Get All Appointments (no limit)
     const [recentAppointments] = await db.query(`
-      SELECT a.*, s.name as service_name 
+      SELECT a.*, s.name as service_name, d.name as dentist_name
       FROM appointments a 
-      LEFT JOIN services s ON a.service_id = s.id 
-      ORDER BY a.created_at DESC 
-      LIMIT 5
+      LEFT JOIN services s ON a.service_id = s.id
+      LEFT JOIN dentists d ON a.dentist_id = d.id
+      ORDER BY a.created_at DESC
     `);
 
     // 6. Get Revenue Stats

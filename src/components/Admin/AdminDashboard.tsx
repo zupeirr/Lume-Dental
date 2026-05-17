@@ -300,14 +300,49 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
-        {tab === "appointments" && (
+        {tab === "appointments" && (() => {
+          const [search, setSearch] = React.useState("");
+          const [statusFilter, setStatusFilter] = React.useState("all");
+          const allAppointments = stats?.recentAppointments || [];
+          const filtered = allAppointments.filter((a: any) => {
+            const matchSearch = !search ||
+              a.name?.toLowerCase().includes(search.toLowerCase()) ||
+              a.email?.toLowerCase().includes(search.toLowerCase()) ||
+              a.phone?.includes(search) ||
+              a.service_name?.toLowerCase().includes(search.toLowerCase());
+            const matchStatus = statusFilter === "all" || a.status === statusFilter;
+            return matchSearch && matchStatus;
+          });
+
+          return (
           <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex justify-between items-center">
-               <h2 className="text-xl font-bold text-white tracking-tight">Clinical Schedule</h2>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+               <h2 className="text-xl font-bold text-white tracking-tight">Clinical Schedule <span className="text-white/30 text-sm font-normal">({allAppointments.length} total)</span></h2>
                <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 shadow-inner">
                   <button onClick={() => setViewMode("list")} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] transition-all ${viewMode === 'list' ? 'bg-brand-blue text-white shadow-lg' : 'text-white/40 hover:text-white/60'}`}>List View</button>
                   <button onClick={() => setViewMode("grid")} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] transition-all ${viewMode === 'grid' ? 'bg-brand-blue text-white shadow-lg' : 'text-white/40 hover:text-white/60'}`}>Time Grid</button>
                </div>
+            </div>
+
+            {/* Search & Filter Bar */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="text"
+                placeholder="Search by name, email, phone or service..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-sm text-white placeholder:text-white/20 focus:border-brand-blue/50 outline-none transition"
+              />
+              <select
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value)}
+                className="bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-sm text-white focus:border-brand-blue/50 outline-none transition"
+              >
+                <option value="all" className="bg-bg-deep">All Statuses</option>
+                <option value="pending" className="bg-bg-deep">Pending</option>
+                <option value="confirmed" className="bg-bg-deep">Confirmed</option>
+                <option value="cancelled" className="bg-bg-deep">Cancelled</option>
+              </select>
             </div>
 
             {viewMode === "grid" ? (
@@ -318,7 +353,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="divide-y divide-white/5">
                      {["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"].map(time => {
-                        const apps = (stats?.recentAppointments || []).filter((a: any) => a.appointment_date.includes(time));
+                        const apps = filtered.filter((a: any) => a.appointment_date.includes(time));
                         return (
                            <div key={time} className="grid grid-cols-[140px_1fr] min-h-[120px] group">
                               <div className="p-10 border-r border-white/10 text-lg font-black text-white/20 flex items-start justify-center bg-white/[0.01] group-hover:bg-white/[0.03] transition-all tabular-nums">{time}</div>
@@ -345,30 +380,38 @@ export default function AdminDashboard() {
                   </div>
                </div>
             ) : (
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {stats?.recentAppointments?.map((a: any) => (
-                    <div key={a.id} className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 hover:bg-white/[0.08] transition-all cursor-pointer group hover:border-brand-blue/30 shadow-lg" onClick={() => setActiveAppointment(a)}>
-                        <div className="flex justify-between items-start mb-6">
-                            <div className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] ${a.status === 'confirmed' ? 'bg-green-500/10 text-green-500' : 'bg-orange-500/10 text-orange-500'}`}>
-                                {a.status}
-                            </div>
-                            <p className="text-white/20 text-[10px] font-black uppercase tracking-[0.2em]">{new Date(a.appointment_date).toLocaleDateString()}</p>
-                        </div>
-                        <h4 className="text-xl font-bold text-white mb-1">{a.name}</h4>
-                        <p className="text-brand-blue text-xs font-black mb-8 uppercase tracking-[0.15em]">{a.service_name}</p>
-                        <div className="pt-6 border-t border-white/5 flex justify-between items-center">
-                            <div className="flex items-center gap-3 text-white/40 text-[10px] font-black uppercase tracking-tight">
-                               <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-brand-blue/10 group-hover:text-brand-blue transition-colors"><Users size={16} /></div>
-                               {a.dentist_name || 'Unassigned'}
-                            </div>
-                            <p className="text-white font-black text-base tabular-nums">${a.amount || 0}</p>
-                        </div>
-                    </div>
-                  ))}
-               </div>
+               <>
+                 {filtered.length === 0 && (
+                   <div className="text-center py-16 text-white/20 text-sm">No appointments match your search.</div>
+                 )}
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                   {filtered.map((a: any) => (
+                     <div key={a.id} className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 hover:bg-white/[0.08] transition-all cursor-pointer group hover:border-brand-blue/30 shadow-lg" onClick={() => setActiveAppointment(a)}>
+                         <div className="flex justify-between items-start mb-6">
+                             <div className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] ${a.status === 'confirmed' ? 'bg-green-500/10 text-green-500' : a.status === 'cancelled' ? 'bg-red-500/10 text-red-500' : 'bg-orange-500/10 text-orange-500'}`}>
+                                 {a.status}
+                             </div>
+                             <p className="text-white/20 text-[10px] font-black uppercase tracking-[0.2em]">{new Date(a.appointment_date).toLocaleDateString()}</p>
+                         </div>
+                         <h4 className="text-xl font-bold text-white mb-1">{a.name}</h4>
+                         <p className="text-white/40 text-xs mb-1">{a.email}</p>
+                         <p className="text-brand-blue text-xs font-black mb-8 uppercase tracking-[0.15em]">{a.service_name}</p>
+                         <div className="pt-6 border-t border-white/5 flex justify-between items-center">
+                             <div className="flex items-center gap-3 text-white/40 text-[10px] font-black uppercase tracking-tight">
+                                <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-brand-blue/10 group-hover:text-brand-blue transition-colors"><Users size={16} /></div>
+                                {a.dentist_name || 'Unassigned'}
+                             </div>
+                             <p className="text-white font-black text-base tabular-nums">${a.amount || 0}</p>
+                         </div>
+                     </div>
+                   ))}
+                 </div>
+               </>
             )}
           </div>
-        )}
+          );
+        })()}
+
 
         {/* ── CONTENT EDITOR TAB ── */}
         {tab === "content" && <ContentEditor />}
