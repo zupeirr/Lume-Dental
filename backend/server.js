@@ -16,7 +16,6 @@ app.use(cors({
   credentials: true,
 }));
 
-const xss = require('xss-clean');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
@@ -24,7 +23,6 @@ const rateLimit = require('express-rate-limit');
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
-app.use(xss());
 
 // Rate Limiting
 const limiter = rateLimit({
