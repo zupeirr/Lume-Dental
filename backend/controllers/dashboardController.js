@@ -51,11 +51,20 @@ exports.getStats = async (req, res) => {
       LIMIT 5
     `);
 
+    // 6. Get Revenue Stats
+    const [revenue] = await db.query("SELECT SUM(amount) as total FROM appointments WHERE payment_status = 'paid'");
+    const totalRevenue = revenue[0].total || 0;
+
+    const [pendingRevenue] = await db.query("SELECT SUM(amount) as total FROM appointments WHERE payment_status = 'unpaid'");
+    const pendingPayments = pendingRevenue[0].total || 0;
+
     res.json({
       totalUsers,
       totalAppointments,
       pendingAppointments,
       totalServices,
+      totalRevenue,
+      pendingPayments,
       appointmentsByDate,
       serviceStats,
       statusStats,

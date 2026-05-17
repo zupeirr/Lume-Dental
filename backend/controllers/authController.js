@@ -16,10 +16,6 @@ exports.register = async (req, res) => {
   try {
     const { name, email, phone, password, role } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Please provide all required fields' });
-    }
-
     // Check if user exists
     const [existingUsers] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
     if (existingUsers.length > 0) {
@@ -59,10 +55,6 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Please provide email and password' });
-    }
 
     // Check for user email
     const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
