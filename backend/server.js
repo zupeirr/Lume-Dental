@@ -8,6 +8,14 @@ const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
+// Place CORS at the very top to intercept preflight requests before security middlewares
+app.use(cors({
+  origin: (origin, callback) => callback(null, origin || true), // Reflect exact origin back
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
+
 const xss = require('xss-clean');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -27,29 +35,7 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // Middleware — restrict CORS to configured origins
-// CORS_ORIGIN in .env can be a single domain or comma-separated list
-// e.g. CORS_ORIGIN=https://www.lumedental.com,http://localhost:5173
-const rawOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
-  .split(',')
-  .map(o => o.trim());
 
-// Always allow Vercel regardless of Render dashboard configuration
-rawOrigins.push('https://lume-dental.vercel.app');
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. Postman, curl, server-to-server)
-    if (!origin || rawOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS: origin '${origin}' not allowed`));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-};
-app.use(cors(corsOptions));
 app.use(express.json({ limit: '10kb' })); // Body parser limit
 
 // Routes
