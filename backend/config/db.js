@@ -36,15 +36,18 @@ const initDb = async () => {
       email TEXT,
       phone TEXT NOT NULL,
       service_id INTEGER,
+      dentist_id INTEGER NULL,
       appointment_date DATETIME NOT NULL,
       comments TEXT,
+      staff_notes TEXT,
       status TEXT DEFAULT 'pending',
       amount REAL DEFAULT 0,
       payment_status TEXT DEFAULT 'unpaid',
       notes TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-      FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL
+      FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL,
+      FOREIGN KEY (dentist_id) REFERENCES dentists(id) ON DELETE SET NULL
     );
 
     CREATE TABLE IF NOT EXISTS notifications (
