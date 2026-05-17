@@ -47,7 +47,8 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/appointments", {
+      const apiUrl = (import.meta as any).env.VITE_API_URL || "http://localhost:5000";
+      const response = await fetch(`${apiUrl}/api/appointments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

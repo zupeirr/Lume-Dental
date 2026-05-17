@@ -1,43 +1,56 @@
+import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { Check } from "lucide-react";
-
 import { ShieldPlus, Smile, Activity } from "lucide-react";
 
-const pricingCategories = [
-  {
-    title: "Preventative Care",
-    icon: <ShieldPlus className="text-brand-blue" size={24} />,
-    description: "Essential maintenance for long-term health.",
-    services: [
-      { name: "Comprehensive Checkup", desc: "Full assessment", price: "from $150" },
-      { name: "Professional Cleaning", desc: "Advanced hygiene", price: "from $120" },
-      { name: "Digital X-Rays", desc: "Precision imaging", price: "from $80" }
-    ]
-  },
-  {
-    title: "Cosmetic Dentistry",
-    icon: <Smile className="text-brand-blue" size={24} />,
-    description: "Enhance your natural smile confidently.",
-    services: [
-      { name: "Professional Whitening", desc: "Instant brightening", price: "from $350" },
-      { name: "Porcelain Veneers", desc: "Custom aesthetics", price: "from $1,200/th" },
-      { name: "Invisalign®", desc: "Clear alignment", price: "Custom Quote" }
-    ],
-    highlight: true
-  },
-  {
-    title: "Restorative Care",
-    icon: <Activity className="text-brand-blue" size={24} />,
-    description: "Repair and restore structural integrity.",
-    services: [
-      { name: "Tooth-Colored Fillings", desc: "Mercury-free repair", price: "from $200" },
-      { name: "Dental Crowns", desc: "Durable protection", price: "from $900" },
-      { name: "Dental Implants", desc: "Permanent replacement", price: "from $2,500" }
-    ]
-  }
-];
+const iconMap: Record<string, React.ReactNode> = {
+  "Preventative Care": <ShieldPlus className="text-brand-blue" size={24} />,
+  "Cosmetic Dentistry": <Smile className="text-brand-blue" size={24} />,
+  "Restorative Care": <Activity className="text-brand-blue" size={24} />,
+};
+
+const DEFAULT_ICON = <ShieldPlus className="text-brand-blue" size={24} />;
+
+interface PricingService {
+  name: string;
+  price: string;
+}
+
+interface PricingCategory {
+  title: string;
+  description: string;
+  highlight?: boolean;
+  services: PricingService[];
+}
+
+interface PricingContent {
+  title: string;
+  description: string;
+  items: PricingCategory[];
+}
 
 export default function Pricing({ onOpenBooking }: { onOpenBooking: () => void }) {
+  const [content, setContent] = useState<PricingContent | null>(null);
+
+  useEffect(() => {
+    const apiUrl = (import.meta as any).env.VITE_API_URL || "http://localhost:5000";
+    fetch(`${apiUrl}/api/content/pricing`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setContent({
+            title: 'Transparent Infrastructure Pricing',
+            description: 'Scalable dental solutions designed for modern lives.',
+            items: data
+          });
+        } else {
+          setContent(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  if (!content) return null;
+
   return (
     <section id="pricing" className="py-24 bg-bg-deep border-y border-white/5">
       <div className="container-wide">
@@ -45,14 +58,14 @@ export default function Pricing({ onOpenBooking }: { onOpenBooking: () => void }
           <div className="inline-flex items-center px-3 py-1 bg-white/5 border border-white/10 rounded-md text-white/50 mb-6">
             <span className="text-[10px] font-bold uppercase tracking-[2px]">Clinical Service Menu</span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tighter">Transparent Infrastructure Pricing</h2>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tighter">{content.title}</h2>
           <p className="text-text-muted text-lg">
-            Scalable dental solutions designed for modern lives. No hidden fees, just precision craftsmanship.
+            {content.description}
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {pricingCategories.map((category, index) => (
+          {content.items.map((category, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
@@ -71,7 +84,7 @@ export default function Pricing({ onOpenBooking }: { onOpenBooking: () => void }
 
               <div className="mb-10">
                 <div className="w-14 h-14 rounded-full bg-brand-blue/10 border border-brand-blue/20 flex items-center justify-center mb-10 group-hover:scale-110 transition-transform duration-500">
-                  {category.icon}
+                  {iconMap[category.title] || DEFAULT_ICON}
                 </div>
                 <h3 className="text-3xl font-bold tracking-tight mb-4 text-white">{category.title}</h3>
                 <p className="text-text-muted text-sm font-medium leading-relaxed max-w-[240px]">
@@ -80,7 +93,7 @@ export default function Pricing({ onOpenBooking }: { onOpenBooking: () => void }
               </div>
 
               <div className="flex-grow space-y-8 mb-12">
-                {category.services.map((service, i) => (
+                {category.services?.map((service: any, i: number) => (
                   <div key={i} className="flex flex-col gap-1">
                     <div className="flex justify-between items-baseline">
                       <span className="text-base font-bold text-white tracking-tight">{service.name}</span>
