@@ -33,6 +33,9 @@ const rawOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
   .split(',')
   .map(o => o.trim());
 
+// Always allow Vercel regardless of Render dashboard configuration
+rawOrigins.push('https://lume-dental.vercel.app');
+
 const corsOptions = {
   origin: (origin, callback) => {
     // Allow requests with no origin (e.g. Postman, curl, server-to-server)
