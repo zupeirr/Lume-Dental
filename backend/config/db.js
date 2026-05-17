@@ -99,6 +99,23 @@ const initDb = async () => {
   
   console.log('SQLite Database Initialized successfully!');
 
+  // Safe migrations — add columns that may not exist in older databases
+  const migrations = [
+    `ALTER TABLE appointments ADD COLUMN dentist_id INTEGER REFERENCES dentists(id) ON DELETE SET NULL`,
+    `ALTER TABLE appointments ADD COLUMN staff_notes TEXT`,
+  ];
+
+  for (const migration of migrations) {
+    try {
+      await dbInstance.run(migration);
+    } catch (e) {
+      // Ignore "duplicate column" errors — column already exists
+      if (!e.message.includes('duplicate column')) {
+        console.warn('Migration warning:', e.message);
+      }
+    }
+  }
+
   // Seed default site content (only on first run)
   const defaultSections = [
     {
