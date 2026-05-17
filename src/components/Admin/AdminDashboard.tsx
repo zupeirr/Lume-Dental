@@ -19,7 +19,7 @@ const token = () => localStorage.getItem("adminToken") ?? "";
 const authHeader = () => ({ "Content-Type": "application/json", Authorization: `Bearer ${token()}` });
 
 export default function AdminDashboard() {
-  const [tab, setTab] = useState<"overview" | "appointments" | "content">("overview");
+  const [tab, setTab] = useState<"overview" | "appointments" | "patients" | "staff" | "content">("overview");
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -30,6 +30,7 @@ export default function AdminDashboard() {
   const [workload, setWorkload] = useState<any[]>([]);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [user, setUser] = useState<any>(null);
+  const [patientList, setPatientList] = useState<any[]>([]);
   const navigate = useNavigate();
 
   const fetchStats = async () => {
@@ -63,10 +64,18 @@ export default function AdminDashboard() {
     } catch (e) { console.error(e); }
   };
 
+  const fetchPatients = async () => {
+    try {
+      const res = await fetch(`${API}/api/dashboard/patients`, { headers: authHeader() });
+      if (res.ok) setPatientList(await res.json());
+    } catch (e) { console.error(e); }
+  };
+
   const refreshAll = () => {
     fetchStats();
     fetchNotifications();
     fetchStaff();
+    fetchPatients();
   };
 
   useEffect(() => { 
@@ -174,10 +183,11 @@ export default function AdminDashboard() {
           {([
             { id: "overview", label: "Overview", Icon: LayoutDashboard, roles: ['admin', 'receptionist'] },
             { id: "appointments", label: "Schedule", Icon: Calendar, roles: ['admin', 'dentist', 'receptionist'] },
-            { id: "staff", label: "Staff", Icon: Users, roles: ['admin'] },
+            { id: "patients", label: "Patients", Icon: Users, roles: ['admin', 'receptionist', 'dentist'] },
+            { id: "staff", label: "Staff", Icon: Activity, roles: ['admin'] },
             { id: "content", label: "Content", Icon: Pencil, roles: ['admin'] },
           ] as const).filter(t => !user || t.roles.includes(user.role)).map(({ id, label, Icon }) => (
-            <button key={id} onClick={() => setTab(id)}
+            <button key={id} onClick={() => setTab(id as any)}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-t-xl text-sm font-bold transition-all ${tab === id ? "bg-white/10 text-white border border-white/10 border-b-0" : "text-white/40 hover:text-white/70"}`}>
               <Icon size={15} /> {label}
             </button>
@@ -259,6 +269,147 @@ export default function AdminDashboard() {
             </div>
           </>
         )}
+
+        {/* ── PATIENTS TAB ── */}
+        {tab === "patients" && (() => {
+          const [search, setSearch] = React.useState("");
+          const [sortBy, setSortBy] = React.useState<"last_visit" | "total_visits" | "total_spent">("last_visit");
+          const [selectedPatient, setSelectedPatient] = React.useState<any>(null);
+
+          const filtered = patientList
+            .filter(p =>
+              !search ||
+              p.name?.toLowerCase().includes(search.toLowerCase()) ||
+              p.email?.toLowerCase().includes(search.toLowerCase()) ||
+              p.phone?.includes(search) ||
+              p.services_used?.toLowerCase().includes(search.toLowerCase())
+            )
+            .sort((a, b) => {
+              if (sortBy === "total_visits") return b.total_visits - a.total_visits;
+              if (sortBy === "total_spent") return (b.total_spent || 0) - (a.total_spent || 0);
+              return new Date(b.last_visit).getTime() - new Date(a.last_visit).getTime();
+            });
+
+          return (
+            <div className="space-y-6 animate-in fade-in duration-500">
+              {/* Header */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-white tracking-tight">
+                    Patient Records
+                    <span className="ml-3 text-white/30 text-sm font-normal">({patientList.length} unique patients)</span>
+                  </h2>
+                  <p className="text-white/30 text-xs mt-1">Aggregated from all appointment bookings</p>
+                </div>
+                <button onClick={() => setActiveModal("patient")} className="flex items-center gap-2 px-5 py-2.5 bg-brand-blue/10 border border-brand-blue/20 text-brand-blue rounded-2xl text-sm font-bold hover:bg-brand-blue/20 transition">
+                  <Plus size={16} /> Add Patient
+                </button>
+              </div>
+
+              {/* Stats Row */}
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { label: "Total Patients", value: patientList.length, color: "brand-blue" },
+                  { label: "Repeat Patients", value: patientList.filter(p => p.total_visits > 1).length, color: "green-500" },
+                  { label: "New This Month", value: patientList.filter(p => new Date(p.first_visit) >= new Date(new Date().setDate(1))).length, color: "orange-500" },
+                ].map(({ label, value, color }) => (
+                  <div key={label} className="bg-white/5 border border-white/10 rounded-3xl p-5 text-center">
+                    <p className={`text-2xl font-black text-${color}`}>{value}</p>
+                    <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">{label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Search & Sort Bar */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <FileText size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
+                  <input
+                    type="text"
+                    placeholder="Search by name, email, phone or service..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-5 py-3 text-sm text-white placeholder:text-white/20 focus:border-brand-blue/50 outline-none transition"
+                  />
+                </div>
+                <select
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value as any)}
+                  className="bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-sm text-white focus:border-brand-blue/50 outline-none"
+                >
+                  <option value="last_visit" className="bg-bg-deep">Sort: Last Visit</option>
+                  <option value="total_visits" className="bg-bg-deep">Sort: Most Visits</option>
+                  <option value="total_spent" className="bg-bg-deep">Sort: Highest Spend</option>
+                </select>
+              </div>
+
+              {/* Patient List */}
+              {filtered.length === 0 ? (
+                <div className="text-center py-20 text-white/20 text-sm">
+                  {search ? "No patients match your search." : "No patient records yet. Bookings will appear here automatically."}
+                </div>
+              ) : (
+                <div className="bg-white/5 border border-white/10 rounded-[2.5rem] overflow-hidden">
+                  {/* Table Header */}
+                  <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr_80px] gap-4 px-6 py-4 border-b border-white/10 bg-white/[0.02]">
+                    {["Patient", "Contact", "Services", "Visits", "Last Visit", "Spend"].map(h => (
+                      <p key={h} className="text-[10px] font-black text-white/20 uppercase tracking-widest">{h}</p>
+                    ))}
+                  </div>
+                  {/* Rows */}
+                  <div className="divide-y divide-white/5">
+                    {filtered.map((p: any, i: number) => (
+                      <div
+                        key={`${p.email}-${i}`}
+                        className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr_80px] gap-4 px-6 py-5 items-center hover:bg-white/[0.04] cursor-pointer transition group"
+                        onClick={() => setSelectedPatient(selectedPatient?.email === p.email ? null : p)}
+                      >
+                        {/* Name */}
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-brand-blue/20 text-brand-blue flex items-center justify-center font-black text-sm flex-shrink-0">
+                            {p.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-white group-hover:text-brand-blue transition">{p.name}</p>
+                            {p.total_visits > 1 && <span className="text-[9px] bg-green-500/10 text-green-500 px-2 py-0.5 rounded-full font-bold">Returning</span>}
+                          </div>
+                        </div>
+                        {/* Contact */}
+                        <div>
+                          <p className="text-xs text-white/50 truncate">{p.email || '—'}</p>
+                          <p className="text-[11px] text-white/30">{p.phone}</p>
+                        </div>
+                        {/* Services */}
+                        <p className="text-[11px] text-brand-blue/70 truncate">{p.services_used || '—'}</p>
+                        {/* Visits */}
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center text-sm font-black text-white">{p.total_visits}</div>
+                        </div>
+                        {/* Last Visit */}
+                        <p className="text-xs text-white/40">{p.last_visit ? new Date(p.last_visit).toLocaleDateString() : '—'}</p>
+                        {/* Spend */}
+                        <p className="text-sm font-black text-white tabular-nums">${(p.total_spent || 0).toFixed(0)}</p>
+                      </div>
+                    ))}
+                    {/* Expanded detail row */}
+                    {selectedPatient && filtered.some((p: any) => p.email === selectedPatient.email) && (
+                      <div className="px-6 py-6 bg-brand-blue/5 border-t border-brand-blue/10">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div><p className="text-[10px] text-white/30 uppercase tracking-widest mb-1">First Visit</p><p className="text-white font-bold">{selectedPatient.first_visit ? new Date(selectedPatient.first_visit).toLocaleDateString() : '—'}</p></div>
+                          <div><p className="text-[10px] text-white/30 uppercase tracking-widest mb-1">Last Visit</p><p className="text-white font-bold">{selectedPatient.last_visit ? new Date(selectedPatient.last_visit).toLocaleDateString() : '—'}</p></div>
+                          <div><p className="text-[10px] text-white/30 uppercase tracking-widest mb-1">Total Visits</p><p className="text-white font-bold">{selectedPatient.total_visits}</p></div>
+                          <div><p className="text-[10px] text-white/30 uppercase tracking-widest mb-1">Total Spent</p><p className="text-white font-bold">${(selectedPatient.total_spent || 0).toFixed(2)}</p></div>
+                          <div className="md:col-span-2"><p className="text-[10px] text-white/30 uppercase tracking-widest mb-1">Phone</p><p className="text-white font-bold">{selectedPatient.phone || '—'}</p></div>
+                          <div className="md:col-span-2"><p className="text-[10px] text-white/30 uppercase tracking-widest mb-1">Services Used</p><p className="text-white font-bold">{selectedPatient.services_used || '—'}</p></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* ── STAFF TAB ── */}
         {tab === "staff" && (

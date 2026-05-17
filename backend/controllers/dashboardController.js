@@ -75,3 +75,32 @@ exports.getStats = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// @desc    Get unique patient list aggregated from all appointments
+// @route   GET /api/dashboard/patients
+// @access  Private (Admin only)
+exports.getPatientList = async (req, res) => {
+  try {
+    // Aggregate unique patients from appointments by email (or name if no email)
+    const [patients] = await db.query(`
+      SELECT
+        email,
+        name,
+        phone,
+        COUNT(*) as total_visits,
+        MAX(appointment_date) as last_visit,
+        MIN(appointment_date) as first_visit,
+        SUM(amount) as total_spent,
+        GROUP_CONCAT(DISTINCT s.name) as services_used,
+        MAX(a.status) as last_status
+      FROM appointments a
+      LEFT JOIN services s ON a.service_id = s.id
+      GROUP BY COALESCE(NULLIF(email,''), name)
+      ORDER BY last_visit DESC
+    `);
+    res.json(patients);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
