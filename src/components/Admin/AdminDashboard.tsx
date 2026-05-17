@@ -31,6 +31,16 @@ export default function AdminDashboard() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [user, setUser] = useState<any>(null);
   const [patientList, setPatientList] = useState<any[]>([]);
+  
+  // Appointment tab state
+  const [appointmentSearch, setAppointmentSearch] = useState("");
+  const [appointmentStatusFilter, setAppointmentStatusFilter] = useState("all");
+  
+  // Patient tab state
+  const [patientSearch, setPatientSearch] = useState("");
+  const [patientSortBy, setPatientSortBy] = useState<"last_visit" | "total_visits" | "total_spent">("last_visit");
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+
   const navigate = useNavigate();
 
   const fetchStats = async () => {
@@ -272,21 +282,17 @@ export default function AdminDashboard() {
 
         {/* ── PATIENTS TAB ── */}
         {tab === "patients" && (() => {
-          const [search, setSearch] = React.useState("");
-          const [sortBy, setSortBy] = React.useState<"last_visit" | "total_visits" | "total_spent">("last_visit");
-          const [selectedPatient, setSelectedPatient] = React.useState<any>(null);
-
           const filtered = patientList
             .filter(p =>
-              !search ||
-              p.name?.toLowerCase().includes(search.toLowerCase()) ||
-              p.email?.toLowerCase().includes(search.toLowerCase()) ||
-              p.phone?.includes(search) ||
-              p.services_used?.toLowerCase().includes(search.toLowerCase())
+              !patientSearch ||
+              p.name?.toLowerCase().includes(patientSearch.toLowerCase()) ||
+              p.email?.toLowerCase().includes(patientSearch.toLowerCase()) ||
+              p.phone?.includes(patientSearch) ||
+              p.services_used?.toLowerCase().includes(patientSearch.toLowerCase())
             )
             .sort((a, b) => {
-              if (sortBy === "total_visits") return b.total_visits - a.total_visits;
-              if (sortBy === "total_spent") return (b.total_spent || 0) - (a.total_spent || 0);
+              if (patientSortBy === "total_visits") return b.total_visits - a.total_visits;
+              if (patientSortBy === "total_spent") return (b.total_spent || 0) - (a.total_spent || 0);
               return new Date(b.last_visit).getTime() - new Date(a.last_visit).getTime();
             });
 
@@ -327,14 +333,14 @@ export default function AdminDashboard() {
                   <input
                     type="text"
                     placeholder="Search by name, email, phone or service..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
+                    value={patientSearch}
+                    onChange={e => setPatientSearch(e.target.value)}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-5 py-3 text-sm text-white placeholder:text-white/20 focus:border-brand-blue/50 outline-none transition"
                   />
                 </div>
                 <select
-                  value={sortBy}
-                  onChange={e => setSortBy(e.target.value as any)}
+                  value={patientSortBy}
+                  onChange={e => setPatientSortBy(e.target.value as any)}
                   className="bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-sm text-white focus:border-brand-blue/50 outline-none"
                 >
                   <option value="last_visit" className="bg-bg-deep">Sort: Last Visit</option>
@@ -346,7 +352,7 @@ export default function AdminDashboard() {
               {/* Patient List */}
               {filtered.length === 0 ? (
                 <div className="text-center py-20 text-white/20 text-sm">
-                  {search ? "No patients match your search." : "No patient records yet. Bookings will appear here automatically."}
+                  {patientSearch ? "No patients match your search." : "No patient records yet. Bookings will appear here automatically."}
                 </div>
               ) : (
                 <div className="bg-white/5 border border-white/10 rounded-[2.5rem] overflow-hidden">
@@ -452,16 +458,14 @@ export default function AdminDashboard() {
           </div>
         )}
         {tab === "appointments" && (() => {
-          const [search, setSearch] = React.useState("");
-          const [statusFilter, setStatusFilter] = React.useState("all");
           const allAppointments = stats?.recentAppointments || [];
           const filtered = allAppointments.filter((a: any) => {
-            const matchSearch = !search ||
-              a.name?.toLowerCase().includes(search.toLowerCase()) ||
-              a.email?.toLowerCase().includes(search.toLowerCase()) ||
-              a.phone?.includes(search) ||
-              a.service_name?.toLowerCase().includes(search.toLowerCase());
-            const matchStatus = statusFilter === "all" || a.status === statusFilter;
+            const matchSearch = !appointmentSearch ||
+              a.name?.toLowerCase().includes(appointmentSearch.toLowerCase()) ||
+              a.email?.toLowerCase().includes(appointmentSearch.toLowerCase()) ||
+              a.phone?.includes(appointmentSearch) ||
+              a.service_name?.toLowerCase().includes(appointmentSearch.toLowerCase());
+            const matchStatus = appointmentStatusFilter === "all" || a.status === appointmentStatusFilter;
             return matchSearch && matchStatus;
           });
 
@@ -480,13 +484,13 @@ export default function AdminDashboard() {
               <input
                 type="text"
                 placeholder="Search by name, email, phone or service..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
+                value={appointmentSearch}
+                onChange={e => setAppointmentSearch(e.target.value)}
                 className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-sm text-white placeholder:text-white/20 focus:border-brand-blue/50 outline-none transition"
               />
               <select
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
+                value={appointmentStatusFilter}
+                onChange={e => setAppointmentStatusFilter(e.target.value)}
                 className="bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-sm text-white focus:border-brand-blue/50 outline-none transition"
               >
                 <option value="all" className="bg-bg-deep">All Statuses</option>
