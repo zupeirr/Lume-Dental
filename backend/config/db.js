@@ -5,7 +5,7 @@ let dbInstance;
 
 const initDb = async () => {
   dbInstance = await open({
-    filename: './database.sqlite',
+    filename: process.env.DB_PATH || './database.sqlite',
     driver: sqlite3.Database
   });
 
