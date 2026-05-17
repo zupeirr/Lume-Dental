@@ -94,7 +94,7 @@ const initDb = async () => {
 
     -- Insert dummy admin user if it doesn't exist
     INSERT OR REPLACE INTO users (id, name, email, phone, password_hash, role) 
-    VALUES (1, 'System Admin', 'admin@lumedental.com', '1234567890', '$2b$10$qcTH7Ll99mJx61d7/mC90e8cXSkoZMXo3cdMQXM3tXOm7Yya.Rb3u', 'admin');
+    VALUES (1, 'System Admin', 'admin@lumedental.com', '1234567890', '$2b$10$x9GYDLX3PjZG7CxwtBKZBeVgJqYQkpXy.f51aKyiLIP13BXAcB48C', 'admin');
   `);
   
   console.log('SQLite Database Initialized successfully!');
