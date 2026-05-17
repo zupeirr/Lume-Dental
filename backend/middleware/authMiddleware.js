@@ -37,6 +37,26 @@ exports.adminOnly = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {
-    res.status(403).json({ message: 'Not authorized as an admin' });
+    res.status(403).json({ message: 'Restricted: Admin access required' });
+  }
+};
+
+// Middleware for any clinical staff (Admin, Dentist, Receptionist)
+exports.staffOnly = (req, res, next) => {
+  const staffRoles = ['admin', 'dentist', 'receptionist'];
+  if (req.user && staffRoles.includes(req.user.role)) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Restricted: Staff access required' });
+  }
+};
+
+// Middleware for medical staff only (Admin, Dentist)
+exports.clinicalOnly = (req, res, next) => {
+  const clinicalRoles = ['admin', 'dentist'];
+  if (req.user && clinicalRoles.includes(req.user.role)) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Restricted: Clinical authorization required' });
   }
 };
