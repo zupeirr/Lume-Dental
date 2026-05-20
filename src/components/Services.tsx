@@ -24,26 +24,57 @@ interface ServicesContent {
   items: ServiceItem[];
 }
 
+const DEFAULT_SERVICES_CONTENT: ServicesContent = {
+  title: "Specialized Dental Care",
+  description: "We offer a comprehensive range of dental solutions using the latest medical breakthroughs and artisanal precision.",
+  buttonText: "View All Services",
+  items: [
+    {
+      title: "Cosmetic Dentistry",
+      description: "Enhance the aesthetics of your smile with premium veneers, whitening, and smile contouring.",
+      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuC1nSqxo1i0irC_dlAJU5q-9MRcKxSFwnAFN0L8mdsaGh-ZZUpQop34_GZpVJbTBmWhUerUVvnLoJlztBSV8EIbl3l7Rq7EoM_giANRqj4mNHH-3l8AsECOuFcN5FG62y8QvWOnFDmRVfnzAMDyOW18iWaDE481croVfT2RK_UnqvqYaegv1ora-t0jy7BldoCgoPzGn_NbAQREsiK24l5S152hDrXNe_jy3Ddlc0k4bBat10zrk3QdarBiRA1ZUiP32PCRiJMd8Z4Z",
+      bullets: ["Professional Whitening", "Porcelain Veneers"]
+    },
+    {
+      title: "Dental Implants",
+      description: "Permanent, natural-looking tooth replacement solutions using biocompatible titanium materials.",
+      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDVm84C_CdaVts5Zxez16ARAHDZ8GUNeca-HrmpS6-m1G1Io4V8hu89Yc0gA61IWzv3aMsTgOVtjJRdaidW3IHGwd3qNyImbRwsmKa25wszDTtY_CecBAw27fPSIbgsNgjpj1wIa2a9VsprjAiSG2moMCvvEEHTxjDWzRo6wdr_hQWRQbt2PqG2LeXHxmY4WMvHrjcldTeH7lU5XiTBbQkImc734uXuN0csp0_pDGoSSo1YxSwOXw-tUG8Pz5aRO4fxFDVGpSQkft6r",
+      bullets: ["Full Arch Reconstruction", "Guided Surgery"]
+    },
+    {
+      title: "Restorative Care",
+      description: "Restoring function and health to damaged teeth with durable, tooth-colored materials.",
+      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBkxawpiEiFVAMUjUdIiRX9AxDXvkAjZeKG8fOs6TSBNy1Gv0VZeZisliT7lHW-gRqOo4xSX838_GUr7DDiTOfiU1gA_kE49nKZFczwhT9LFk-Ho1elaMXgBFiWLk7uDu04Q9OCEWkSP5xW1J4OQ22zzHAxxPTD-b4DwilG1RcmfeyIX8L6nafQMiidfJ5cr73lKHrRbidy5P9lf3uQaOHfkDjElY0j6JVTfbwV9LmaZcAvxIuJ5HKcCGJm_mDufs5IMPx4FovObnft",
+      bullets: ["Metal-Free Fillings", "Precision Crowns"]
+    }
+  ]
+};
+
 export default function Services() {
-  const [content, setContent] = useState<ServicesContent | null>(null);
+  const [content, setContent] = useState<ServicesContent>(DEFAULT_SERVICES_CONTENT);
 
   useEffect(() => {
     const apiUrl = (import.meta as any).env.VITE_API_URL || "http://localhost:5000";
     fetch(`${apiUrl}/api/content/services`)
-      .then(r => r.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch services");
+        return res.json();
+      })
       .then(data => {
         if (Array.isArray(data)) {
           setContent({
-            title: 'Specialized Dental Care',
-            description: 'We offer a comprehensive range of dental solutions...',
-            buttonText: 'View All Services',
+            title: "Specialized Dental Care",
+            description: "We offer a comprehensive range of dental solutions using the latest medical breakthroughs and artisanal precision.",
+            buttonText: "View All Services",
             items: data
           });
-        } else {
+        } else if (data && Array.isArray(data.items)) {
           setContent(data);
         }
       })
-      .catch(() => {}); 
+      .catch((err) => {
+        console.warn("Could not fetch database content for services, using local fallback.", err);
+      }); 
   }, []);
 
   if (!content) return null;
