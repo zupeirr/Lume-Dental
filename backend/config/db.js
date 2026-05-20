@@ -1,105 +1,207 @@
 const { Pool } = require('pg');
+require('dotenv').config();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+let pool;
+if (process.env.DATABASE_URL) {
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
+} else if (process.env.PGHOST) {
+  pool = new Pool({
+    host: process.env.PGHOST,
+    database: process.env.PGDATABASE,
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
+    port: 5432,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
+} else {
+  console.error("No database connection environment variables set!");
+}
 
 const initDb = async () => {
+  console.log('Initializing Postgres Database...');
+
+  // 1. Create users
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        phone TEXT,
-        password_hash TEXT NOT NULL,
-        role TEXT DEFAULT 'patient',
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        role VARCHAR(50) DEFAULT 'patient',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+      )
+    `);
+    console.log("Table 'users' checked/created successfully.");
+  } catch (err) {
+    console.error("Error creating 'users' table:", err);
+  }
 
+  // 2. Create services
+  try {
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS services (
         id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        description TEXT,
-        price REAL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+        title VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        image TEXT,
+        bullets TEXT[]
+      )
+    `);
+    console.log("Table 'services' checked/created successfully.");
+  } catch (err) {
+    console.error("Error creating 'services' table:", err);
+  }
 
+  // 3. Create dentists
+  try {
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS dentists (
         id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        specialty TEXT,
-        phone TEXT,
-        email TEXT,
-        is_active INTEGER DEFAULT 1,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+        name VARCHAR(255) NOT NULL,
+        specialty VARCHAR(255) NOT NULL,
+        image TEXT,
+        availability JSONB
+      )
+    `);
+    console.log("Table 'dentists' checked/created successfully.");
+  } catch (err) {
+    console.error("Error creating 'dentists' table:", err);
+  }
 
+  // 4. Create appointments
+  try {
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS appointments (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-        name TEXT NOT NULL,
-        email TEXT,
-        phone TEXT NOT NULL,
-        service_id INTEGER REFERENCES services(id) ON DELETE SET NULL,
-        dentist_id INTEGER REFERENCES dentists(id) ON DELETE SET NULL,
-        appointment_date TIMESTAMP NOT NULL,
-        comments TEXT,
-        staff_notes TEXT,
-        status TEXT DEFAULT 'pending',
-        amount REAL DEFAULT 0,
-        payment_status TEXT DEFAULT 'unpaid',
+        patient_id INT,
+        dentist_id INT,
+        date VARCHAR(100),
+        time VARCHAR(100),
+        status VARCHAR(50) DEFAULT 'pending',
+        type VARCHAR(100),
         notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+      )
+    `);
+    console.log("Table 'appointments' checked/created successfully.");
+  } catch (err) {
+    console.error("Error creating 'appointments' table:", err);
+  }
 
+  // 5. Create notifications
+  try {
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS notifications (
         id SERIAL PRIMARY KEY,
-        title TEXT NOT NULL,
-        message TEXT NOT NULL,
-        type TEXT DEFAULT 'info',
-        is_read INTEGER DEFAULT 0,
+        user_id INT,
+        message TEXT,
+        is_read BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+      )
+    `);
+    console.log("Table 'notifications' checked/created successfully.");
+  } catch (err) {
+    console.error("Error creating 'notifications' table:", err);
+  }
 
+  // 6. Create site_content
+  try {
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS site_content (
         id SERIAL PRIMARY KEY,
-        section TEXT UNIQUE NOT NULL,
+        section VARCHAR(100) UNIQUE NOT NULL,
         content TEXT NOT NULL,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+      )
+    `);
+    console.log("Table 'site_content' checked/created successfully.");
+  } catch (err) {
+    console.error("Error creating 'site_content' table:", err);
+  }
 
+  // 7. Create patient_records
+  try {
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS patient_records (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        patient_id INT NOT NULL,
         medical_history TEXT,
         allergies TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        last_visit VARCHAR(100),
+        next_appointment VARCHAR(100),
+        treatment_plans JSONB DEFAULT '[]'::jsonb,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log("Table 'patient_records' checked/created successfully.");
+  } catch (err) {
+    console.error("Error creating 'patient_records' table:", err);
+  }
+
+  // Seeding initial services
+  try {
+    const servicesCount = await pool.query('SELECT COUNT(*) FROM services');
+    if (parseInt(servicesCount.rows[0].count) === 0) {
+      const defaultServices = [
+        {
+          title: 'Cosmetic Dentistry',
+          description: 'Enhance the aesthetics of your smile with premium veneers, whitening, and smile contouring.',
+          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC1nSqxo1i0irC_dlAJU5q-9MRcKxSFwnAFN0L8mdsaGh-ZZUpQop34_GZpVJbTBmWhUerUVvnLoJlztBSV8EIbl3l7Rq7EoM_giANRqj4mNHH-3l8AsECOuFcN5FG62y8QvWOnFDmRVfnzAMDyOW18iWaDE481croVfT2RK_UnqvqYaegv1ora-t0jy7BldoCgoPzGn_NbAQREsiK24l5S152hDrXNe_jy3Ddlc0k4bBat10zrk3QdarBiRA1ZUiP32PCRiJMd8Z4Z',
+          bullets: ['Professional Whitening', 'Porcelain Veneers']
+        },
+        {
+          title: 'Dental Implants',
+          description: 'Permanent, natural-looking tooth replacement solutions using biocompatible titanium materials.',
+          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDVm84C_CdaVts5Zxez16ARAHDZ8GUNeca-HrmpS6-m1G1Io4V8hu89Yc0gA61IWzv3aMsTgOVtjJRdaidW3IHGwd3qNyImbRwsmKa25wszDTtY_CecBAw27fPSIbgsNgjpj1wIa2a9VsprjAiSG2moMCvvEEHTxjDWzRo6wdr_hQWRQbt2PqG2LeXHxmY4WMvHrjcldTeH7lU5XiTBbQkImc734uXuN0csp0_pDGoSSo1YxSwOXw-tUG8Pz5aRO4fxFDVGpSQkft6r',
+          bullets: ['Full Arch Reconstruction', 'Guided Surgery']
+        },
+        {
+          title: 'Restorative Care',
+          description: 'Restoring function and health to damaged teeth with durable, tooth-colored materials.',
+          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBkxawpiEiFVAMUjUdIiRX9AxDXvkAjZeKG8fOs6TSBNy1Gv0VZeZisliT7lHW-gRqOo4xSX838_GUr7DDiTOfiU1gA_kE49nKZFczwhT9LFk-Ho1elaMXgBFiWLk7uDu04Q9OCEWkSP5xW1J4OQ22zzHAxxPTD-b4DwilG1RcmfeyIX8L6nafQMiidfJ5cr73lKHrRbidy5P9lf3uQaOHfkDjElY0j6JVTfbwV9LmaZcAvxIuJ5HKcCGJm_mDufs5IMPx4FovObnft',
+          bullets: ['Metal-Free Fillings', 'Precision Crowns']
+        }
+      ];
+      for (const s of defaultServices) {
+        await pool.query(
+          'INSERT INTO services (title, description, image, bullets) VALUES ($1, $2, $3, $4)',
+          [s.title, s.description, s.image, s.bullets]
+        );
+      }
+      console.log('Services seeded successfully.');
+    }
+  } catch (err) {
+    console.error('Failed to seed services:', err);
+  }
+
+  // Seeding initial Admin
+  try {
+    const adminCount = await pool.query("SELECT COUNT(*) FROM users WHERE role = 'admin'");
+    if (parseInt(adminCount.rows[0].count) === 0) {
+      const bcrypt = require('bcrypt');
+      const hashedPassword = await bcrypt.hash('admin123', 10);
+      await pool.query(
+        "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) ON CONFLICT (email) DO UPDATE SET password = EXCLUDED.password",
+        ['Admin', 'admin@lumedental.com', hashedPassword, 'admin']
       );
-    `);
+      console.log('Admin user seeded successfully.');
+    }
+  } catch (err) {
+    console.error('Failed to seed Admin user:', err);
+  }
 
-    // Insert seeds
-    await pool.query(`
-      INSERT INTO services (id, name, description, price) VALUES 
-      (1, 'Comprehensive Checkup', 'General checkup and cleaning', 150.00),
-      (2, 'Professional Whitening', 'Teeth whitening service', 200.00),
-      (3, 'Restorative Care', 'Fillings, crowns, and bridges', 300.00),
-      (4, 'Invisalign® Consultation', 'Clear aligners consultation', 100.00)
-      ON CONFLICT (id) DO NOTHING;
-    `);
-
-    await pool.query(`
-      INSERT INTO users (id, name, email, phone, password_hash, role) 
-      VALUES (1, 'System Admin', 'admin@lumedental.com', '1234567890', '$2b$10$x9GYDLX3PjZG7CxwtBKZBeVgJqYQkpXy.f51aKyiLIP13BXAcB48C', 'admin')
-      ON CONFLICT (id) DO UPDATE SET 
-        name=EXCLUDED.name, email=EXCLUDED.email, password_hash=EXCLUDED.password_hash, role=EXCLUDED.role;
-    `);
-
-    const { rowCount } = await pool.query(`SELECT 1 FROM site_content LIMIT 1`);
-    if (rowCount === 0) {
+  // Seeding site content
+  try {
+    const contentCount = await pool.query('SELECT COUNT(*) FROM site_content');
+    if (parseInt(contentCount.rows[0].count) === 0) {
       const defaultSections = [
         {
           section: 'services',
@@ -147,33 +249,33 @@ const initDb = async () => {
           [section, content]
         );
       }
+      console.log('Site content seeded successfully.');
+    } else {
+      console.log('Site content already seeded.');
     }
-
-    console.log('PostgreSQL Database Initialized successfully!');
   } catch (err) {
-    console.error('Failed to initialize Postgres schema:', err);
+    console.error('Failed to seed site content:', err);
   }
+
+  console.log('PostgreSQL Database Initialized successfully!');
 };
 
-if (process.env.DATABASE_URL) {
+if (process.env.DATABASE_URL || process.env.PGHOST) {
   initDb();
 } else {
-  console.log('WARNING: DATABASE_URL not set in environment.');
+  console.log('WARNING: Neither DATABASE_URL nor PGHOST set in environment.');
 }
 
 module.exports = {
   query: async (sql, params = []) => {
-    // 1) Translate SQLite "?" into PostgreSQL "$1, $2, etc"
     let counter = 1;
     let pgSql = sql.replace(/\?/g, () => `$${counter++}`);
     
-    // 2) Emulate the .insertId behavior for SQLite compatibility
     const isModification = ['INSERT', 'UPDATE', 'DELETE'].some(cmd => pgSql.trim().toUpperCase().startsWith(cmd));
     if (pgSql.trim().toUpperCase().startsWith('INSERT') && !pgSql.toUpperCase().includes('RETURNING')) {
       pgSql += ' RETURNING id';
     }
 
-    // Replace SQLite specific DATE/IFNULL syntax that fails in Postgres
     pgSql = pgSql.replace(/IFNULL\(/gi, 'COALESCE(');
 
     try {

@@ -16,26 +16,60 @@ interface GalleryContent {
   items: TransformationItem[];
 }
 
+const DEFAULT_GALLERY_CONTENT: GalleryContent = {
+  label: "Clinical Results",
+  title: "Patient Transformations",
+  description: "View the precision and artistry of our restorative and cosmetic procedures.",
+  items: [
+    {
+      id: 1,
+      title: "Smile Design",
+      description: "Full arch reconstruction with precision-fit porcelain veneers.",
+      before: "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=800",
+      after: "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      id: 2,
+      title: "Orthodontic Clarity",
+      description: "Seamless alignment correction using advanced clear aligner tech.",
+      before: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=800",
+      after: "/regenerated_image_1777535324973.png"
+    },
+    {
+      id: 3,
+      title: "Restorative Art",
+      description: "Ceramic crown replacement restoring both function and aesthetics.",
+      before: "/regenerated_image_1777534956328.png",
+      after: "/regenerated_image_1777535516110.png"
+    }
+  ]
+};
+
 export default function Gallery() {
-  const [content, setContent] = useState<GalleryContent | null>(null);
+  const [content, setContent] = useState<GalleryContent>(DEFAULT_GALLERY_CONTENT);
 
   useEffect(() => {
     const apiUrl = (import.meta as any).env.VITE_API_URL || "http://localhost:5000";
     fetch(`${apiUrl}/api/content/gallery`)
-      .then(r => r.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch gallery");
+        return res.json();
+      })
       .then(data => {
         if (Array.isArray(data)) {
           setContent({
-            label: 'Clinical Results',
-            title: 'Patient Transformations',
-            description: 'View the precision and artistry of our restorative and cosmetic procedures.',
+            label: "Clinical Results",
+            title: "Patient Transformations",
+            description: "View the precision and artistry of our restorative and cosmetic procedures.",
             items: data
           });
-        } else {
+        } else if (data && Array.isArray(data.items)) {
           setContent(data);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.warn("Could not fetch database content for gallery, using local fallback.", err);
+      });
   }, []);
 
   if (!content) return null;

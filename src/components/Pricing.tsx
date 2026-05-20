@@ -28,25 +28,67 @@ interface PricingContent {
   items: PricingCategory[];
 }
 
+const DEFAULT_PRICING_CONTENT: PricingContent = {
+  title: "Transparent Infrastructure Pricing",
+  description: "Scalable dental solutions designed for modern lives. No hidden fees, just precision craftsmanship.",
+  items: [
+    {
+      title: "Preventative Care",
+      description: "Essential maintenance for long-term health.",
+      highlight: false,
+      services: [
+        { name: "Comprehensive Checkup", price: "from $150" },
+        { name: "Professional Cleaning", price: "from $120" },
+        { name: "Digital X-Rays", price: "from $80" }
+      ]
+    },
+    {
+      title: "Cosmetic Dentistry",
+      description: "Enhance your natural smile confidently.",
+      highlight: true,
+      services: [
+        { name: "Professional Whitening", price: "from $350" },
+        { name: "Porcelain Veneers", price: "from $1,200/th" },
+        { name: "Invisalign®", price: "Custom Quote" }
+      ]
+    },
+    {
+      title: "Restorative Care",
+      description: "Repair and restore structural integrity.",
+      highlight: false,
+      services: [
+        { name: "Tooth-Colored Fillings", price: "from $200" },
+        { name: "Dental Crowns", price: "from $900" },
+        { name: "Dental Implants", price: "from $2,500" }
+      ]
+    }
+  ]
+};
+
 export default function Pricing({ onOpenBooking }: { onOpenBooking: () => void }) {
-  const [content, setContent] = useState<PricingContent | null>(null);
+  const [content, setContent] = useState<PricingContent>(DEFAULT_PRICING_CONTENT);
 
   useEffect(() => {
     const apiUrl = (import.meta as any).env.VITE_API_URL || "http://localhost:5000";
     fetch(`${apiUrl}/api/content/pricing`)
-      .then(r => r.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch pricing");
+        return res.json();
+      })
       .then(data => {
         if (Array.isArray(data)) {
           setContent({
-            title: 'Transparent Infrastructure Pricing',
-            description: 'Scalable dental solutions designed for modern lives.',
+            title: "Transparent Infrastructure Pricing",
+            description: "Scalable dental solutions designed for modern lives. No hidden fees, just precision craftsmanship.",
             items: data
           });
-        } else {
+        } else if (data && Array.isArray(data.items)) {
           setContent(data);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.warn("Could not fetch database content for pricing, using local fallback.", err);
+      });
   }, []);
 
   if (!content) return null;

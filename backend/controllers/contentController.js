@@ -1,6 +1,5 @@
 const db = require('../config/db');
 
-// Default content used the very first time (seeds the DB)
 const DEFAULTS = {
   services: JSON.stringify([
     {
@@ -81,9 +80,6 @@ const DEFAULTS = {
   ])
 };
 
-// @desc    Get all site content sections
-// @route   GET /api/content
-// @access  Public
 exports.getAllContent = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT section, content FROM site_content');
@@ -98,24 +94,27 @@ exports.getAllContent = async (req, res) => {
   }
 };
 
-// @desc    Get a single content section
-// @route   GET /api/content/:section
-// @access  Public
 exports.getSection = async (req, res) => {
   try {
     const { section } = req.params;
     const [rows] = await db.query('SELECT content FROM site_content WHERE section = ?', [section]);
     if (!rows.length) return res.status(404).json({ message: 'Section not found' });
-    res.json(JSON.parse(rows[0].content));
+    
+    let content = rows[0].content;
+    if (typeof content === 'string') {
+      try {
+        content = JSON.parse(content);
+      } catch (err) {
+        console.error(`Failed to parse content for section ${section}:`, err);
+      }
+    }
+    res.json(content);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// @desc    Update a site content section
-// @route   PUT /api/content/:section
-// @access  Private (Admin only)
 exports.updateSection = async (req, res) => {
   try {
     const { section } = req.params;
